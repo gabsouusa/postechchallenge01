@@ -1,5 +1,5 @@
-from flask import Flask, request, jsonify
-from webscraping import capturar_dados, capturar_anos, capturar_subopcoes
+from flask import Flask, request
+from webscraping.webscraping import capturar_dados, capturar_anos, capturar_subopcoes
 import logging
 import json
 
