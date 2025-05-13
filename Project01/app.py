@@ -57,6 +57,34 @@ def get_dados():
         logging.error(f"Erro ao processar a requisição: {e}")
         return json.dumps({"erro": "Erro interno do servidor."}, ensure_ascii=False), 500
 
+# # POST - Adiciona novo dado manualmente
+# @app.route('/dados', methods=['POST'])
+# def adicionar_dado():
+#     novo_dado = request.get_json()
+#     if not novo_dado:
+#         return json.dumps({"erro": "Dados ausentes no corpo da requisição."}, ensure_ascii=False), 400
+
+#     dados_memoria.append(novo_dado)
+#     return json.dumps({"mensagem": "Dado adicionado com sucesso.", "dado": novo_dado}, ensure_ascii=False), 201
+
+# # PUT - Atualiza dado existente baseado no índice
+# @app.route('/dados/<int:indice>', methods=['PUT'])
+# def atualizar_dado(indice):
+#     if indice >= len(dados_memoria):
+#         return json.dumps({"erro": "Índice não encontrado."}, ensure_ascii=False), 404
+
+#     dado_atualizado = request.get_json()
+#     dados_memoria[indice] = dado_atualizado
+#     return json.dumps({"mensagem": "Dado atualizado com sucesso.", "dado": dado_atualizado}, ensure_ascii=False), 200
+
+# # DELETE - Remove dado baseado no índice
+# @app.route('/dados/<int:indice>', methods=['DELETE'])
+# def deletar_dado(indice):
+#     if indice >= len(dados_memoria):
+#         return json.dumps({"erro": "Índice não encontrado."}, ensure_ascii=False), 404
+
+#     removido = dados_memoria.pop(indice)
+#     return json.dumps({"mensagem": "Dado removido com sucesso.", "dado": removido}, ensure_ascii=False), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
