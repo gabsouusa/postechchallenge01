@@ -1,6 +1,6 @@
 import json
 import logging
-from flask import Flask, request
+from flask import Flask, request#, render_template
 from db_config import db
 from models import Wine
 from webscraping.webscraping import capturar_dados, capturar_anos, capturar_subopcoes
@@ -22,13 +22,15 @@ create_tables()
 
 def register_data(data, opt, sub):
     """
-    Cria uma nova receita
+    Cria um novo registro no banco de dados com os dados capturados.
     """
     registros = [
         Wine(
             ano=item.get('ano'),
-            produto=item.get('produto', opt),
-            subproduto=item.get('subproduto', sub),
+            opcao=opt,
+            subopcao=sub,
+            produto=item.get('produto'),
+            subproduto=item.get('subproduto'),
             tipo=item.get('tipo'),
             quantidade_lt=item.get('quantidade_lt'),
             quantidade_kg=item.get('quantidade_kg'),
@@ -45,6 +47,7 @@ def register_data(data, opt, sub):
 @app.route('/')
 def home():
     return '🍇 API Vitibrasil Online'
+    #return render_template('index.html')
 
 
 @app.route('/dados', methods=['GET'])
@@ -79,11 +82,10 @@ def get_dados():
                 return json.dumps({"erro": f"Subopção inválida. Escolha uma das seguintes subopções para essa opção: {', '.join(valid_suboptions)}."}, ensure_ascii=False), 400
             
     try:
-        filters = [Wine.produto == opt]
-        filters.append(Wine.ano == (year if year is not None else 2023))
+        filters = [Wine.opcao == opt]
+        filters.append(Wine.ano == (int(year) if year is not None else 2023))
         if sub:
-            filters.append(Wine.subproduto == sub)
-        logging.info(f"Filtros aplicados: {filters}")
+            filters.append(Wine.subopcao == sub)
         query = Wine.query.filter(*filters)
         if query.count() == 0:
             logging.info("Dado não encontrado no banco de dados. Iniciando scraping...")
@@ -105,6 +107,7 @@ def get_dados():
             return json.dumps({"mensagem": "Nenhum dado encontrado para esta opção."}, ensure_ascii=False), 404
         
         return json.dumps(dados, ensure_ascii=False, indent=2), 200
+        #return render_template("index.html", resultado=dados)
     
     except Exception as e:
         logging.error(f"Erro ao processar a requisição: {e}")

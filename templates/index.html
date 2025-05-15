@@ -1,0 +1,40 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Vitibrasil Online 🍇</title>
+</head>
+<body>
+  <h1>Vitibrasil Online 🍷</h1>
+  <p>Bem-vindo à API de dados sobre vinho e derivados!</p>
+    <h1>Consultar dados</h1>
+    <form method="GET" action="/dados">
+        <label for="opcao">Opção:</label>
+        <input type="text" id="opcao" name="opcao" placeholder="Ex: opt_02"><br><br>
+
+        <label for="ano">Ano:</label>
+        <input type="number" id="ano" name="ano" placeholder="Ex: 2023"><br><br>
+
+        <label for="subopcao">Subopção:</label>
+        <input type="text" id="subopcao" name="subopcao" placeholder="Ex: subopt_01"><br><br>
+
+        <button type="submit">Consultar</button>
+    </form>
+    {% if resultado %}
+    <h2>Resultado:</h2>
+    <ul>
+        {% for item in resultado %}
+            <li>
+                <ul>
+                    {% for key, value in item.items() %}
+                        <li><strong>{{ key }}:</strong> {{ value }}</li>
+                    {% endfor %}
+                </ul>
+            </li>
+            <br>
+        {% endfor %}
+    </ul>
+{% endif %}
+</body>
+</html>
