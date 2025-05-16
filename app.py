@@ -2,7 +2,7 @@ import json
 import logging
 from flask import Flask, request#, render_template
 from modules.database.db_config import db
-from modules.database.functions import create_tables, register_data, execute_query
+from modules.database.functions import create_tables, register_data, execute_query, drop_tables
 from modules.database.models import Producao, Processamento, Comercializacao, Importacao, Exportacao
 from modules.webscraping.webscraping import capturar_dados, capturar_anos, capturar_subopcoes
 
@@ -20,6 +20,8 @@ opcao_model_map = {
 }
 db.init_app(app)
 create_tables(app, db)
+# Caso queira apagar a tabela e criar novamente, descomente a linha abaixo
+# drop_tables(app, db)
 
 
 @app.route('/')
