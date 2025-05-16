@@ -111,7 +111,7 @@ def capturar_dados_opt_02_04(url, ano):
                 produto_atual = primeira_coluna
                 dados.append({
                     'ano': ano,
-                    'produto': produto_atual,
+                    'produto': produto_atual.title(),
                     'subproduto': '*',
                     'quantidade_lt': valor
                 })
@@ -162,7 +162,7 @@ def capturar_dados_opt_03(url, ano, sub):
                 cultivar_atual = primeira_coluna
                 dados.append({
                     'ano': ano,
-                    'tipo': tipo_nome,
+                    'tipo': tipo_nome.title(),
                     'cultivar': cultivar_atual.title(),
                     'subproduto': '*',
                     'quantidade_kg': valor
@@ -171,7 +171,7 @@ def capturar_dados_opt_03(url, ano, sub):
                 subproduto = primeira_coluna.lower()
                 dados.append({
                     'ano': ano,
-                    'tipo': tipo_nome,
+                    'tipo': tipo_nome.title(),
                     'cultivar': cultivar_atual.title(),
                     'subproduto': subproduto.title(),
                     'quantidade_kg': valor
@@ -216,7 +216,7 @@ def capturar_dados_opt_05_06(url, opcao, ano, sub):
                 valor = None
             dados.append({
                 'ano': ano,
-                'tipo': tipo_nome,
+                'tipo': tipo_nome.title(),
                 'pais': pais.title(),
                 'quantidade_kg': quantidade,
                 'valor_usd': valor
