@@ -6,23 +6,20 @@ from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.INFO)
 
+base_url = 'http://vitibrasil.cnpuv.embrapa.br/index.php'
+default_year = 2023
+
 def capturar_anos(opcao, ano):
-        if opcao == 'opt_02':
+        if opcao == 2 or opcao == 3 or opcao == 4:
             min_ano, max_ano = 1970, 2023
-        elif opcao == 'opt_03':
-            min_ano, max_ano = 1970, 2023
-        elif opcao == 'opt_04':
-            min_ano, max_ano = 1970, 2023
-        elif opcao == 'opt_05':
-            min_ano, max_ano = 1970, 2024
-        elif opcao == 'opt_06':
+        elif opcao == 5 or opcao == 6:
             min_ano, max_ano = 1970, 2024
         else:
             logging.error(f"Opção {opcao} não é suportada.")
             return None, None
         
         if ano < min_ano or ano > max_ano:
-            url = f'http://vitibrasil.cnpuv.embrapa.br/index.php?ano=2023&opcao={opcao}'
+            url = f'{base_url}?ano={ano}&opcao=opt_0{opcao}'
             try:
                 response = requests.get(url)
                 response.raise_for_status()
@@ -42,27 +39,27 @@ def capturar_anos(opcao, ano):
         return min_ano, max_ano
 
 def capturar_subopcoes(opcao, sub):
-    if opcao == 'opt_03':
+    if opcao == 3:
         subopcoes = {
-            'subopt_01': 'Viníferas',
-            'subopt_02': 'Americanas e híbridas',
-            'subopt_03': 'Uvas de mesa',
-            'subopt_04': 'Sem classificação'
+            1: 'Viníferas',
+            2: 'Americanas E Híbridas',
+            3: 'Uvas De Mesa',
+            4: 'Sem Classificação'
         } 
-    elif opcao == 'opt_05':
+    elif opcao == 5:
         subopcoes = {
-            'subopt_01': 'Vinhos de mesa',
-            'subopt_02': 'Espumantes',
-            'subopt_03': 'Uvas frescas',
-            'subopt_04': 'Uvas passas',
-            'subopt_05': 'Suco de uva'
+            1: 'Vinhos De Mesa',
+            2: 'Espumantes',
+            3: 'Uvas Frescas',
+            4: 'Uvas Passas',
+            5: 'Suco De Uva'
         }
-    elif opcao == 'opt_06': 
+    elif opcao == 6: 
         subopcoes = {
-            'subopt_01': 'Vinhos de mesa',
-            'subopt_02': 'Espumantes',
-            'subopt_03': 'Uvas frescas',
-            'subopt_06': 'Suco de uva'
+            1: 'Vinhos De Mesa',
+            2: 'Espumantes',
+            3: 'Uvas Frescas',
+            4: 'Suco De Uva'
         }
     else:
         logging.error(f"Subopção {sub} não é suportada para a Opção {opcao}.")
@@ -71,8 +68,7 @@ def capturar_subopcoes(opcao, sub):
     valid_keys = subopcoes.keys()
 
     if sub not in valid_keys:
-        url = f'http://vitibrasil.cnpuv.embrapa.br/index.php?ano=2023&opcao={opcao}'
-        subopcoes = {}
+        url = f'{base_url}?ano={default_year}&opcao=opt_0{opcao}'
         try:
             response = requests.get(url)
             response.raise_for_status()
@@ -89,157 +85,157 @@ def capturar_subopcoes(opcao, sub):
     return subopcoes
 
 
-def capturar_dados_opt_02_04(ano, opcao):
+def capturar_dados_opt_02_04(url, ano):
     dados = []
-    url = f'http://vitibrasil.cnpuv.embrapa.br/index.php?ano={ano}&opcao={opcao}'
     try:
-            response = requests.get(url)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser', from_encoding=response.encoding)
-            tabela = soup.find('table', class_='tb_base tb_dados')
-            
-            produto_atual = None
-            for row in tabela.find_all('tr'):
-                cols = row.find_all('td')
-                if not cols or len(cols) < 2:
-                    continue
-                primeira_coluna = cols[0].get_text(strip=True)
-                segunda_coluna = cols[1].get_text(strip=True)
-                if not primeira_coluna or 'total' in primeira_coluna.lower():
-                    continue
-                valor = None
-                try:
-                    valor = float(segunda_coluna.replace('.', '').replace(',', '.')) if segunda_coluna not in ('', '-') else None
-                except ValueError:
-                    pass
-                if 'tb_item' in cols[0].get('class', []):
-                    produto_atual = primeira_coluna
-                    dados.append({
-                        'ano': ano,
-                        'produto': produto_atual,
-                        'subproduto': 'valor total produto',
-                        'quantidade_lt': valor
-                    })
-                elif 'tb_subitem' in cols[0].get('class', []) and produto_atual:
-                    subproduto = primeira_coluna.lower()
-                    dados.append({
-                        'ano': ano,
-                        'produto': produto_atual,
-                        'subproduto': subproduto,
-                        'quantidade_lt': valor
-                    })
+        response = requests.get(url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser', from_encoding=response.encoding)
+        tabela = soup.find('table', class_='tb_base tb_dados')
+        
+        produto_atual = None
+        for row in tabela.find_all('tr'):
+            cols = row.find_all('td')
+            if not cols or len(cols) < 2:
+                continue
+            primeira_coluna = cols[0].get_text(strip=True)
+            segunda_coluna = cols[1].get_text(strip=True)
+            if not primeira_coluna or 'total' in primeira_coluna.lower():
+                continue
+            valor = None
+            try:
+                valor = float(segunda_coluna.replace('.', '').replace(',', '.')) if segunda_coluna not in ('', '-') else None
+            except ValueError:
+                pass
+            if 'tb_item' in cols[0].get('class', []):
+                produto_atual = primeira_coluna
+                dados.append({
+                    'ano': ano,
+                    'produto': produto_atual,
+                    'subproduto': '*',
+                    'quantidade_lt': valor
+                })
+            elif 'tb_subitem' in cols[0].get('class', []) and produto_atual:
+                subproduto = primeira_coluna.lower()
+                dados.append({
+                    'ano': ano,
+                    'produto': produto_atual.title(),
+                    'subproduto': subproduto.title(),
+                    'quantidade_lt': valor
+                })
     except requests.exceptions.RequestException as e:
         logging.error(f"Erro ao acessar {url}: {e}")
     time.sleep(1)
     return dados
 
-def capturar_dados_opt_03(ano, sub):
+def capturar_dados_opt_03(url, ano, sub):
     dados = []
-    url = f'http://vitibrasil.cnpuv.embrapa.br/index.php?ano={ano}&opcao=opt_03&subopcao={sub}'
-    if sub == 'subopt_01':
+    if sub == 1:
         tipo_nome = 'Vinífetas'
-    if sub == 'subopt_02':
-        tipo_nome = 'Americanas e Híbridas'
-    if sub == 'subopt_03':
-        tipo_nome = 'Uvas de mesa'
-    if sub == 'subopt_04':
-        tipo_nome = 'Sem classificação'
+    if sub == 2:
+        tipo_nome = 'Americanas E Híbridas'
+    if sub == 3:
+        tipo_nome = 'Uvas De Mesa'
+    if sub == 4:
+        tipo_nome = 'Sem Classificação'
     try:
-                response = requests.get(url)
-                response.raise_for_status()
-                soup = BeautifulSoup(response.text, 'html.parser', from_encoding=response.encoding)
-                tabela = soup.find('table', class_='tb_base tb_dados')
-                
-                cultivar_atual = None
-                for row in tabela.find_all('tr'):
-                    cols = row.find_all('td')
-                    if not cols or len(cols) < 2:
-                        continue
-                    primeira_coluna = cols[0].get_text(strip=True)
-                    segunda_coluna = cols[1].get_text(strip=True)
-                    if not primeira_coluna or 'total' in primeira_coluna.lower():
-                        continue
-                    valor = None
-                    try:
-                        valor = float(segunda_coluna.replace('.', '').replace(',', '.')) if segunda_coluna not in ('', '-') else None
-                    except ValueError:
-                        pass
-                    if 'tb_item' in cols[0].get('class', []):
-                        cultivar_atual = primeira_coluna
-                        dados.append({
-                            'ano': ano,
-                            'tipo': tipo_nome,
-                            'cultivar': cultivar_atual,
-                            'subproduto': 'valor total cultivar',
-                            'quantidade_kg': valor
-                        })
-                    elif 'tb_subitem' in cols[0].get('class', []) and cultivar_atual:
-                        subproduto = primeira_coluna.lower()
-                        dados.append({
-                            'ano': ano,
-                            'tipo': tipo_nome,
-                            'cultivar': cultivar_atual,
-                            'subproduto': subproduto,
-                            'quantidade_kg': valor
-                        })
+        response = requests.get(url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser', from_encoding=response.encoding)
+        tabela = soup.find('table', class_='tb_base tb_dados')
+        
+        cultivar_atual = None
+        for row in tabela.find_all('tr'):
+            cols = row.find_all('td')
+            if not cols or len(cols) < 2:
+                continue
+            primeira_coluna = cols[0].get_text(strip=True)
+            segunda_coluna = cols[1].get_text(strip=True)
+            if not primeira_coluna or 'total' in primeira_coluna.lower():
+                continue
+            valor = None
+            try:
+                valor = float(segunda_coluna.replace('.', '').replace(',', '.')) if segunda_coluna not in ('', '-') else None
+            except ValueError:
+                pass
+            if 'tb_item' in cols[0].get('class', []):
+                cultivar_atual = primeira_coluna
+                dados.append({
+                    'ano': ano,
+                    'tipo': tipo_nome,
+                    'cultivar': cultivar_atual.title(),
+                    'subproduto': '*',
+                    'quantidade_kg': valor
+                })
+            elif 'tb_subitem' in cols[0].get('class', []) and cultivar_atual:
+                subproduto = primeira_coluna.lower()
+                dados.append({
+                    'ano': ano,
+                    'tipo': tipo_nome,
+                    'cultivar': cultivar_atual.title(),
+                    'subproduto': subproduto.title(),
+                    'quantidade_kg': valor
+                })
     except requests.exceptions.RequestException as e:
         logging.error(f"Erro ao acessar {url}: {e}")
     time.sleep(1)
     return dados
 
-def capturar_dados_opt_05_06(opcao, ano, sub):
+def capturar_dados_opt_05_06(url, opcao, ano, sub):
     dados = []
-    url = f'http://vitibrasil.cnpuv.embrapa.br/index.php?ano={ano}&opcao={opcao}&subopcao={sub}'
-    if sub == 'subopt_01':
-        tipo_nome = 'Vinhos de mesa'
-    if sub == 'subopt_02':
+    if sub == 1:
+        tipo_nome = 'Vinhos De Mesa'
+    if sub == 2:
         tipo_nome = 'Espumantes'
-    if sub == 'subopt_03':
-        tipo_nome = 'Uvas frescas'
-    if (opcao == 'opt_05') & (sub == 'subopt_04'):
-        tipo_nome = 'Uvas passas'
-    if ((opcao == 'opt_05') & (sub == 'subopt_05')) | ((opcao == 'opt_04') & (sub == 'subopt_04')):
-        tipo_nome = 'Suco de uva'
+    if sub == 3:
+        tipo_nome = 'Uvas Frescas'
+    if (opcao == 5) & (sub == 4):
+        tipo_nome = 'Uvas Passas'
+    if ((opcao == 5) & (sub == 5)) | ((opcao == 4) & (sub == 4)):
+        tipo_nome = 'Suco De Uva'
     try:
-                response = requests.get(url)
-                response.raise_for_status()
-                soup = BeautifulSoup(response.text, 'html.parser', from_encoding=response.encoding)
-                tabela = soup.find('table', class_='tb_base tb_dados')
+        response = requests.get(url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser', from_encoding=response.encoding)
+        tabela = soup.find('table', class_='tb_base tb_dados')
 
-                for row in tabela.find_all('tr'):
-                    cols = row.find_all('td')
-                    if len(cols) != 3:
-                        continue
-                    pais = cols[0].get_text(strip=True)
-                    quantidade_raw = cols[1].get_text(strip=True)
-                    valor_raw = cols[2].get_text(strip=True)
-                    try:
-                        quantidade = float(quantidade_raw.replace('.', '').replace(',', '.')) if quantidade_raw not in ('', '-') else None
-                    except ValueError:
-                        quantidade = None
-                    try:
-                        valor = float(valor_raw.replace('.', '').replace(',', '.')) if valor_raw not in ('', '-') else None
-                    except ValueError:
-                        valor = None
-                    dados.append({
-                        'ano': ano,
-                        'tipo': tipo_nome,
-                        'pais': pais,
-                        'quantidade_kg': quantidade,
-                        'valor_usd': valor
-                    })
+        for row in tabela.find_all('tr'):
+            cols = row.find_all('td')
+            if len(cols) != 3:
+                continue
+            pais = cols[0].get_text(strip=True)
+            quantidade_raw = cols[1].get_text(strip=True)
+            valor_raw = cols[2].get_text(strip=True)
+            try:
+                quantidade = float(quantidade_raw.replace('.', '').replace(',', '.')) if quantidade_raw not in ('', '-') else None
+            except ValueError:
+                quantidade = None
+            try:
+                valor = float(valor_raw.replace('.', '').replace(',', '.')) if valor_raw not in ('', '-') else None
+            except ValueError:
+                valor = None
+            dados.append({
+                'ano': ano,
+                'tipo': tipo_nome,
+                'pais': pais.title(),
+                'quantidade_kg': quantidade,
+                'valor_usd': valor
+            })
     except requests.exceptions.RequestException as e:
         logging.error(f"Erro ao acessar {url}: {e}")
     time.sleep(1)
     return dados
 
 def capturar_dados(opcao, ano, sub):
-    if opcao == 'opt_02' or opcao == 'opt_04':
-        return capturar_dados_opt_02_04(ano, opcao)
-    elif opcao == 'opt_03':
-        return capturar_dados_opt_03(ano, sub)
-    elif opcao in ['opt_05', 'opt_06']:
-        return capturar_dados_opt_05_06(opcao, ano, sub)
+    if opcao == 2 or opcao == 4:
+        url = f'{base_url}?ano={ano}&opcao=opt_0{opcao}'
+        return capturar_dados_opt_02_04(url, ano)
+    elif opcao == 3:
+        url = f'{base_url}?ano={ano}&opcao=opt_0{opcao}&subopcao=subopt_0{sub}'
+        return capturar_dados_opt_03(url, ano, sub)
+    elif opcao in [5, 6]:
+        url = f'{base_url}?ano={ano}&opcao=opt_0{opcao}&subopcao=subopt_0{sub}'
+        return capturar_dados_opt_05_06(url, opcao, ano, sub)
     else:
         logging.warning(f"⚠️ Opção {opcao} não é suportada.")
         return []

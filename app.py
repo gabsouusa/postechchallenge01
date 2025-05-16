@@ -2,7 +2,7 @@ import json
 import logging
 from flask import Flask, request#, render_template
 from db_config import db
-from models import Wine
+from models import Producao, Processamento, Comercializacao, Importacao, Exportacao
 from webscraping.webscraping import capturar_dados, capturar_anos, capturar_subopcoes
 
 app = Flask(__name__)
@@ -15,31 +15,42 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def create_tables():
     with app.app_context():
         # Caso queira apagar a tabela e criar novamente, descomente a linha abaixo
-        # Wine.__table__.drop(db.engine)
+        # Producao.__table__.drop(db.engine)
+        # Processamento.__table__.drop(db.engine)
+        # Comercializacao.__table__.drop(db.engine)
+        # Importacao.__table__.drop(db.engine)
+        # Exportacao.__table__.drop(db.engine)
         db.create_all()
 create_tables()
 
 
-def register_data(data, opt, sub):
+def register_data(data, opt):
     """
-    Cria um novo registro no banco de dados com os dados capturados.
+    Cria novos registros no banco de dados de forma dinâmica,
+    com base na tabela correspondente à opção.
     """
-    registros = [
-        Wine(
-            ano=item.get('ano'),
-            opcao=opt,
-            subopcao=sub,
-            produto=item.get('produto'),
-            subproduto=item.get('subproduto'),
-            tipo=item.get('tipo'),
-            quantidade_lt=item.get('quantidade_lt'),
-            quantidade_kg=item.get('quantidade_kg'),
-            cultivar=item.get('cultivar'),
-            pais=item.get('pais'),
-            valor_usd=item.get('valor_usd')
-        )
-        for item in data
-    ]
+    opcao_model_map = {
+        2: Producao,
+        3: Processamento,
+        4: Comercializacao,
+        5: Importacao,
+        6: Exportacao,
+    }
+
+    Model = opcao_model_map.get(opt)
+
+    registros = []
+    for item in data:
+        campos_validos = {col.name for col in Model.__table__.columns}
+        dados_filtrados = {
+            key: value
+            for key, value in item.items()
+            if key in campos_validos
+        }
+
+        registro = Model(**dados_filtrados)
+        registros.append(registro)
+
     db.session.add_all(registros)
     db.session.commit()
 
@@ -52,11 +63,11 @@ def home():
 
 @app.route('/dados', methods=['GET'])
 def get_dados():
-    opt = request.args.get("opcao")
+    opt = int(request.args.get("opcao"))
     logging.info(f"Requisição recebida para a opção: {opt}")
-    valid_options = {'opt_02', 'opt_03', 'opt_04', 'opt_05', 'opt_06'}
+    valid_options = {2, 3, 4, 5, 6}
     if opt not in valid_options:
-        return json.dumps({"erro": f"Opção inválida. Escolha uma das seguintes: {', '.join(valid_options)}."}, ensure_ascii=False), 400
+        return json.dumps({"erro": f"Opção inválida. Escolha uma das seguintes: 2, 3, 4, 5, 6."}, ensure_ascii=False), 400
     
     year = request.args.get("ano", type=int, default=2023)
     valid_year_start, valid_year_end = capturar_anos(opt, year)
@@ -66,40 +77,46 @@ def get_dados():
         return json.dumps({"erro": f"Ano inválido. Escolha uma dos seguintes anos para essa opção: {str(valid_year_start)} - {str(valid_year_end)}."}, ensure_ascii=False), 400
 
     sub = None
-    if opt in ('opt_03', 'opt_05', 'opt_06'):
-        sub = request.args.get("subopcao", default='subopt_01')
+    if opt in (3, 5, 6):
+        try:
+            sub = int(request.args.get("subopcao", default=1))
+        except:
+            return json.dumps({"erro": "Subopção inválida. Escolha um número inteiro."}, ensure_ascii=False), 400
         valid_suboptions = capturar_subopcoes(opt, sub)
         if valid_suboptions is None:
             return json.dumps({"erro": "Ocorreu um erro ao tentar acessar o servidor. Por favor, tente novamente mais tarde."}, ensure_ascii=False), 400
         if sub:
             valid_suboptions_keys = list(valid_suboptions.keys())
-            valid_suboptions_values = list(valid_suboptions.values())
-
-            sub_normalized = sub.lower()
-            valid_options_normalized = [v.lower() for v in valid_suboptions_keys + valid_suboptions_values]
-
-            if sub_normalized not in valid_options_normalized:
-                return json.dumps({"erro": f"Subopção inválida. Escolha uma das seguintes subopções para essa opção: {', '.join(valid_suboptions)}."}, ensure_ascii=False), 400
+            sub_value = valid_suboptions.get(sub)
+            if sub not in valid_suboptions_keys:
+                return json.dumps({"erro": f"Subopção inválida. Escolha uma das seguintes subopções para essa opção: {', '.join(map(str, valid_suboptions))}."}, ensure_ascii=False), 400
             
     try:
-        filters = [Wine.opcao == opt]
-        filters.append(Wine.ano == (int(year) if year is not None else 2023))
-        if sub:
-            filters.append(Wine.subopcao == sub)
-        query = Wine.query.filter(*filters)
+        opcao_model_map = {
+            2: Producao,
+            3: Processamento,
+            4: Comercializacao,
+            5: Importacao,
+            6: Exportacao,
+        }
+        Model = opcao_model_map.get(opt)
+        filters = [Model.ano == (int(year) if year is not None else 2023)]
+        if sub is not None:
+            filters.append(Model.tipo == sub_value)
+        query = Model.query.filter(*filters)
         if query.count() == 0:
             logging.info("Dado não encontrado no banco de dados. Iniciando scraping...")
             dados = capturar_dados(opt, year, sub)
             if not dados:
                 return json.dumps({"mensagem": "Nenhum dado encontrado para esta opção."}, ensure_ascii=False), 404
             logging.info("Escrevendo dado no banco de dados...")
-            register_data(dados, opt, sub)
+            register_data(dados, opt)
             logging.info("Banco de dados atualizado com sucesso.")
         else:
             dados = []
             for row in query.all():
                 row_data = {}
-                for column in Wine.__table__.columns:  
+                for column in Model.__table__.columns:  
                     row_data[column.name] = getattr(row, column.name)  
                 dados.append(row_data)
             logging.info("Retornando dado do banco.")
