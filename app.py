@@ -1,58 +1,25 @@
 import json
 import logging
 from flask import Flask, request#, render_template
-from db_config import db
-from models import Producao, Processamento, Comercializacao, Importacao, Exportacao
-from webscraping.webscraping import capturar_dados, capturar_anos, capturar_subopcoes
+from modules.database.db_config import db
+from modules.database.functions import create_tables, register_data, execute_query
+from modules.database.models import Producao, Processamento, Comercializacao, Importacao, Exportacao
+from modules.webscraping.webscraping import capturar_dados, capturar_anos, capturar_subopcoes
 
-app = Flask(__name__)
-app.config['JSON_AS_ASCII'] = False
-app.config.from_object('config')
-db.init_app(app)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+app = Flask(__name__)
+app.config.from_object('config')
 
-def create_tables():
-    with app.app_context():
-        # Caso queira apagar a tabela e criar novamente, descomente a linha abaixo
-        # Producao.__table__.drop(db.engine)
-        # Processamento.__table__.drop(db.engine)
-        # Comercializacao.__table__.drop(db.engine)
-        # Importacao.__table__.drop(db.engine)
-        # Exportacao.__table__.drop(db.engine)
-        db.create_all()
-create_tables()
-
-
-def register_data(data, opt):
-    """
-    Cria novos registros no banco de dados de forma dinâmica,
-    com base na tabela correspondente à opção.
-    """
-    opcao_model_map = {
-        2: Producao,
-        3: Processamento,
-        4: Comercializacao,
-        5: Importacao,
-        6: Exportacao,
-    }
-
-    Model = opcao_model_map.get(opt)
-
-    registros = []
-    for item in data:
-        campos_validos = {col.name for col in Model.__table__.columns}
-        dados_filtrados = {
-            key: value
-            for key, value in item.items()
-            if key in campos_validos
-        }
-
-        registro = Model(**dados_filtrados)
-        registros.append(registro)
-
-    db.session.add_all(registros)
-    db.session.commit()
+opcao_model_map = {
+    2: Producao,
+    3: Processamento,
+    4: Comercializacao,
+    5: Importacao,
+    6: Exportacao,
+}
+db.init_app(app)
+create_tables(app, db)
 
 
 @app.route('/')
@@ -60,9 +27,8 @@ def home():
     return '🍇 API Vitibrasil Online'
     #return render_template('index.html')
 
-
 @app.route('/dados', methods=['GET'])
-def get_dados():
+def get_dados():  
     opt = int(request.args.get("opcao"))
     logging.info(f"Requisição recebida para a opção: {opt}")
     valid_options = {2, 3, 4, 5, 6}
@@ -77,6 +43,7 @@ def get_dados():
         return json.dumps({"erro": f"Ano inválido. Escolha uma dos seguintes anos para essa opção: {str(valid_year_start)} - {str(valid_year_end)}."}, ensure_ascii=False), 400
 
     sub = None
+    sub_value = None
     if opt in (3, 5, 6):
         try:
             sub = int(request.args.get("subopcao", default=1))
@@ -92,34 +59,15 @@ def get_dados():
                 return json.dumps({"erro": f"Subopção inválida. Escolha uma das seguintes subopções para essa opção: {', '.join(map(str, valid_suboptions))}."}, ensure_ascii=False), 400
             
     try:
-        opcao_model_map = {
-            2: Producao,
-            3: Processamento,
-            4: Comercializacao,
-            5: Importacao,
-            6: Exportacao,
-        }
-        Model = opcao_model_map.get(opt)
-        filters = [Model.ano == (int(year) if year is not None else 2023)]
-        if sub is not None:
-            filters.append(Model.tipo == sub_value)
-        query = Model.query.filter(*filters)
-        if query.count() == 0:
+        dados = execute_query(year, opt, sub, sub_value, opcao_model_map)
+        if dados is None:
             logging.info("Dado não encontrado no banco de dados. Iniciando scraping...")
             dados = capturar_dados(opt, year, sub)
             if not dados:
                 return json.dumps({"mensagem": "Nenhum dado encontrado para esta opção."}, ensure_ascii=False), 404
             logging.info("Escrevendo dado no banco de dados...")
-            register_data(dados, opt)
+            register_data(db, dados, opt, opcao_model_map)
             logging.info("Banco de dados atualizado com sucesso.")
-        else:
-            dados = []
-            for row in query.all():
-                row_data = {}
-                for column in Model.__table__.columns:  
-                    row_data[column.name] = getattr(row, column.name)  
-                dados.append(row_data)
-            logging.info("Retornando dado do banco.")
         if not dados:
             return json.dumps({"mensagem": "Nenhum dado encontrado para esta opção."}, ensure_ascii=False), 404
         

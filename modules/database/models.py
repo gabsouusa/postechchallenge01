@@ -1,4 +1,4 @@
-from db_config import db
+from .db_config import db
 
 
 class Producao(db.Model):
