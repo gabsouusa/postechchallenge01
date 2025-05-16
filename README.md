@@ -67,3 +67,5 @@ jwt required
     delete/importacao
     delete/exportacao
 ```
+
+![alt text](templates/architecture.png)
