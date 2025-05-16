@@ -41,7 +41,7 @@ def capturar_anos(opcao, ano):
 def capturar_subopcoes(opcao, sub):
     if opcao == 3:
         subopcoes = {
-            1: 'Viníferas',
+            1: 'Vinífetas',
             2: 'Americanas E Híbridas',
             3: 'Uvas De Mesa',
             4: 'Sem Classificação'
@@ -191,7 +191,7 @@ def capturar_dados_opt_05_06(url, opcao, ano, sub):
         tipo_nome = 'Uvas Frescas'
     if (opcao == 5) & (sub == 4):
         tipo_nome = 'Uvas Passas'
-    if ((opcao == 5) & (sub == 5)) | ((opcao == 4) & (sub == 4)):
+    if ((opcao == 5) & (sub == 5)) | ((opcao == 6) & (sub == 4)):
         tipo_nome = 'Suco De Uva'
     try:
         response = requests.get(url)
