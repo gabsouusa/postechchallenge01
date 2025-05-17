@@ -1,4 +1,4 @@
-from modules.database.models import Producao, Processamento, Comercializacao, Importacao, Exportacao
+from modules.database.models import Producao, Processamento, Comercializacao, Importacao, Exportacao, Usuario
 
 
 def create_tables(app, db):
@@ -13,6 +13,7 @@ def drop_tables(app, db):
         Comercializacao.__table__.drop(db.engine)
         Importacao.__table__.drop(db.engine)
         Exportacao.__table__.drop(db.engine)
+        Usuario.__table__.drop(db.engine)
 
 
 def register_data(db, data, opt, opcao_model_map):

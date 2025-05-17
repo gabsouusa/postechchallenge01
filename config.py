@@ -5,3 +5,7 @@ SWAGGER = {
     'title': 'API Tech Challenge',
     'uiversion': 3
 }
+SECRET_KEY = 'chave-secreta'
+CACHE_TYPE = 'simple'
+JWT_SECRET_KEY = 'jwt-chave-secreta'
+JWT_ACCESS_TOKEN_EXPIRES = 1800

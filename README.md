@@ -14,10 +14,15 @@ https://www.python.org/ftp/python/3.13.3/python-3.13.3-amd64.exe
 ## Activate venv ans install libs
 
 ```cmd
-cd project/01
 python -m venv venv
 venv/Scripts/activate
 pip install requirements.txt
+```
+
+## Run
+
+```cmd
+python app.py
 ```
 
 Rotas

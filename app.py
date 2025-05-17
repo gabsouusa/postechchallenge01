@@ -3,8 +3,12 @@ import logging
 from flask import Flask, request#, render_template
 from modules.database.db_config import db
 from modules.database.functions import create_tables, register_data, execute_query, drop_tables
-from modules.database.models import Producao, Processamento, Comercializacao, Importacao, Exportacao
+from modules.database.models import Producao, Processamento, Comercializacao, Importacao, Exportacao, Usuario
 from modules.webscraping.webscraping import capturar_dados, capturar_anos, capturar_subopcoes
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required
+)
+from auth.jwt_handlers import configure_jwt_handlers  # importando os handlers de jwt personalizados
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -23,14 +27,36 @@ create_tables(app, db)
 # Caso queira apagar a tabela e criar novamente, descomente a linha abaixo
 # drop_tables(app, db)
 
+jwt = JWTManager(app)
+configure_jwt_handlers(app, jwt)
 
 @app.route('/')
 def home():
     return '🍇 API Vitibrasil Online'
     #return render_template('index.html')
 
+@app.route('/register', methods=['POST'])
+def register_user():
+    data = request.get_json()
+    if Usuario.query.filter_by(username=data['username']).first():
+        return json.dumps({"error": "Usuario já existe"}), 400
+    new_user = Usuario(username=data['username'], password=data['password'])
+    db.session.add(new_user)
+    db.session.commit()
+    return json.dumps({"msg": "Usuario criado"}), 201
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    user = Usuario.query.filter_by(username=data['username']).first()
+    if user and user.password == data['password']:
+        token = create_access_token(identity=str(user.id))
+        return json.dumps({"acess_token": token}), 200
+    return json.dumps({"error": "Credenciais invalidas"}), 201
+
 @app.route('/dados', methods=['GET'])
-def get_dados():  
+@jwt_required()
+def get_dados():
     opt = int(request.args.get("opcao"))
     logging.info(f"Requisição recebida para a opção: {opt}")
     valid_options = {2, 3, 4, 5, 6}
