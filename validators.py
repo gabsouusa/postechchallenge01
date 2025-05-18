@@ -2,22 +2,6 @@ import json
 from modules.webscraping.webscraping import capturar_anos, capturar_subopcoes
 from flask import request
 
-# valid_options = {2, 3, 4, 5, 6}
-# error_option_response = json.dumps({
-#     "erro": "Opção inválida. Escolha uma das seguintes: 2, 3, 4, 5, 6."
-# }, ensure_ascii=False), 400
-
-# def validate_option():
-#     try:
-#         opt = int(request.args.get("opcao"))
-#         logging.info(f"Requisição recebida para a opção: {opt}")
-#         if opt not in valid_options:
-#             return error_option_response
-#     except:
-#         return error_option_response
-    
-#     return opt
-
 def validate_year(opt):
     ano_raw = request.args.get("ano")
     year = request.args.get("ano", type=int)
