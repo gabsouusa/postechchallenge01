@@ -1,0 +1,70 @@
+import json
+from modules.webscraping.webscraping import capturar_anos, capturar_subopcoes
+from flask import request
+
+# valid_options = {2, 3, 4, 5, 6}
+# error_option_response = json.dumps({
+#     "erro": "Opção inválida. Escolha uma das seguintes: 2, 3, 4, 5, 6."
+# }, ensure_ascii=False), 400
+
+# def validate_option():
+#     try:
+#         opt = int(request.args.get("opcao"))
+#         logging.info(f"Requisição recebida para a opção: {opt}")
+#         if opt not in valid_options:
+#             return error_option_response
+#     except:
+#         return error_option_response
+    
+#     return opt
+
+def validate_year(opt):
+    ano_raw = request.args.get("ano")
+    year = request.args.get("ano", type=int)
+    if ano_raw is not None and year is None:
+        return json.dumps({
+            "erro": "O valor do parâmetro 'ano' deve ser um número inteiro."
+        }, ensure_ascii=False), 400
+
+    if year is None:
+        year = 2023 if opt in {2, 3, 4} else 2024
+
+    valid_year_start, valid_year_end = capturar_anos(opt, year)
+    if valid_year_start is None or valid_year_end is None:
+        return json.dumps({
+            "erro": "Ocorreu um erro ao tentar acessar o servidor. Por favor, tente novamente mais tarde."
+        }, ensure_ascii=False), 400
+
+    if year < valid_year_start or year > valid_year_end:
+        return json.dumps({
+            "erro": f"Ano inválido. Escolha um dos seguintes anos para essa opção: {valid_year_start} - {valid_year_end}."
+        }, ensure_ascii=False), 400
+    
+    return year
+
+def validate_suboption(opt):
+    sub = None
+    sub_value = None
+    if opt in (3, 5, 6):
+        try:
+            sub = int(request.args.get("subopcao", default=1))
+        except:
+            return json.dumps({
+                "erro": "Subopção inválida. Escolha um número inteiro."
+            }, ensure_ascii=False), 400
+
+        valid_suboptions = capturar_subopcoes(opt, sub)
+        if valid_suboptions is None:
+            return json.dumps({
+                "erro": "Ocorreu um erro ao tentar acessar o servidor. Por favor, tente novamente mais tarde."
+            }, ensure_ascii=False), 400
+
+        valid_suboptions_keys = list(valid_suboptions.keys())
+        sub_value = valid_suboptions.get(sub)
+
+        if sub not in valid_suboptions_keys:
+            return json.dumps({
+                "erro": f"Subopção inválida. Escolha uma das seguintes subopções para essa opção: {', '.join(map(str, valid_suboptions))}."
+            }, ensure_ascii=False), 400
+            
+    return sub, sub_value
