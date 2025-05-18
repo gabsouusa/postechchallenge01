@@ -16,7 +16,7 @@ https://www.python.org/ftp/python/3.13.3/python-3.13.3-amd64.exe
 ```cmd
 python -m venv venv
 venv/Scripts/activate
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Run
