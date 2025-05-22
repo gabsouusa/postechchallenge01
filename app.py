@@ -13,6 +13,15 @@ from auth.jwt_handlers import configure_jwt_handlers  # importando os handlers d
 from flasgger import Swagger
 from config import SWAGGER_TEMPLATE
 
+from data_service import fetch_or_scrape_data
+
+# from routers.producao import producao_bp
+# from routers.processamento import processamento_bp
+# from routers.comercializacao import comercializacao_bp
+# from routers.importacao import importacao_bp
+# from routers.exportacao import exportacao_bp
+from routers.auth import auth_bp
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
@@ -35,29 +44,37 @@ configure_jwt_handlers(app, jwt)
 
 swagger = Swagger(app, template=SWAGGER_TEMPLATE)
 
-def fetch_or_scrape_data(year, opt, db, opcao_model_map, sub=None, sub_value=None):
-    try:
-        dados = execute_query(year, opt, sub, sub_value, opcao_model_map)
+# Rotas
+# app.register_blueprint(producao_bp)
+# app.register_blueprint(processamento_bp)
+# app.register_blueprint(comercializacao_bp)
+# app.register_blueprint(importacao_bp)
+# app.register_blueprint(exportacao_bp)
+app.register_blueprint(auth_bp)
 
-        if dados is None:
-            logging.info("Dado não encontrado no banco de dados. Iniciando scraping...")
-            dados = capturar_dados(opt, year, sub)
+# def fetch_or_scrape_data(year, opt, db, opcao_model_map, sub=None, sub_value=None):
+#     try:
+#         dados = execute_query(year, opt, sub, sub_value, opcao_model_map)
 
-            if not dados:
-                return json.dumps({"mensagem": "Nenhum dado encontrado para esta opção."}, ensure_ascii=False), 404
+#         if dados is None:
+#             logging.info("Dado não encontrado no banco de dados. Iniciando scraping...")
+#             dados = capturar_dados(opt, year, sub)
 
-            logging.info("Escrevendo dado no banco de dados...")
-            register_data(db, dados, opt, opcao_model_map)
-            logging.info("Banco de dados atualizado com sucesso.")
+#             if not dados:
+#                 return json.dumps({"mensagem": "Nenhum dado encontrado para esta opção."}, ensure_ascii=False), 404
 
-        if not dados:
-            return json.dumps({"mensagem": "Nenhum dado encontrado para esta opção."}, ensure_ascii=False), 404
+#             logging.info("Escrevendo dado no banco de dados...")
+#             register_data(db, dados, opt, opcao_model_map)
+#             logging.info("Banco de dados atualizado com sucesso.")
 
-        return json.dumps(dados, ensure_ascii=False, indent=2), 200
+#         if not dados:
+#             return json.dumps({"mensagem": "Nenhum dado encontrado para esta opção."}, ensure_ascii=False), 404
 
-    except Exception as e:
-        logging.error(f"Erro ao processar a requisição: {e}")
-        return json.dumps({"erro": "Erro interno do servidor."}, ensure_ascii=False), 500
+#         return json.dumps(dados, ensure_ascii=False, indent=2), 200
+
+#     except Exception as e:
+#         logging.error(f"Erro ao processar a requisição: {e}")
+#         return json.dumps({"erro": "Erro interno do servidor."}, ensure_ascii=False), 500
 
 
 @app.route('/')
@@ -65,68 +82,68 @@ def home():
     return '🍇 API Vitibrasil Online'
     #return render_template('index.html')
 
-@app.route('/register', methods=['POST'])
-def register_user():
-    """
-    Registra um novo usuário
-    ---
-    tags:
-      - Autenticação
-    parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-                username:
-                    type: string
-                password:
-                    type: string
-    responses:
-        201:
-            description: Usuário criado com sucesso
-        400:
-            description: Usuário já existe
-    """
-    data = request.get_json()
-    if Usuario.query.filter_by(username=data['username']).first():
-        return json.dumps({"error": "Usuário já existe"}), 400
-    new_user = Usuario(username=data['username'], password=data['password'])
-    db.session.add(new_user)
-    db.session.commit()
-    return json.dumps({"msg": "Usuário criado"}), 201
+# @app.route('/register', methods=['POST'])
+# def register_user():
+#     """
+#     Registra um novo usuário
+#     ---
+#     tags:
+#       - Autenticação
+#     parameters:
+#         - in: body
+#           name: body
+#           required: true
+#           schema:
+#             type: object
+#             properties:
+#                 username:
+#                     type: string
+#                 password:
+#                     type: string
+#     responses:
+#         201:
+#             description: Usuário criado com sucesso
+#         400:
+#             description: Usuário já existe
+#     """
+#     data = request.get_json()
+#     if Usuario.query.filter_by(username=data['username']).first():
+#         return json.dumps({"error": "Usuário já existe"}), 400
+#     new_user = Usuario(username=data['username'], password=data['password'])
+#     db.session.add(new_user)
+#     db.session.commit()
+#     return json.dumps({"msg": "Usuário criado"}), 201
 
-@app.route('/login', methods=['POST'])
-def login():
-    """
-    Faz login do usuário e retorna um JWT
-    ---
-    tags:
-      - Autenticação
-    parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-                username:
-                    type: string
-                password:
-                    type: string
-    responses:
-        201:
-            description: Login bem sucedido, retorna JWT
-        400:
-            description: Credenciais inválidas
-    """
-    data = request.get_json()
-    user = Usuario.query.filter_by(username=data['username']).first()
-    if user and user.password == data['password']:
-        token = create_access_token(identity=str(user.id))
-        return json.dumps({"acess_token": token}), 200
-    return json.dumps({"error": "Credenciais invalidas"}), 201
+# @app.route('/login', methods=['POST'])
+# def login():
+#     """
+#     Faz login do usuário e retorna um JWT
+#     ---
+#     tags:
+#       - Autenticação
+#     parameters:
+#         - in: body
+#           name: body
+#           required: true
+#           schema:
+#             type: object
+#             properties:
+#                 username:
+#                     type: string
+#                 password:
+#                     type: string
+#     responses:
+#         201:
+#             description: Login bem sucedido, retorna JWT
+#         400:
+#             description: Credenciais inválidas
+#     """
+#     data = request.get_json()
+#     user = Usuario.query.filter_by(username=data['username']).first()
+#     if user and user.password == data['password']:
+#         token = create_access_token(identity=str(user.id))
+#         return json.dumps({"acess_token": token}), 200
+#     return json.dumps({"error": "Credenciais invalidas"}), 201
 
 
 @app.route('/producao', methods=['GET'])

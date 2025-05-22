@@ -3,6 +3,17 @@ from modules.webscraping.webscraping import capturar_anos, capturar_subopcoes
 from flask import request
 
 def validate_year(opt):
+    """
+    Valida o parâmetro de ano fornecido na query da requisição.
+
+    Parâmetros:
+    - opt (int): Código da opção (ex: 2 a 6), utilizado para definir o ano padrão e buscar o intervalo válido.
+
+    Retorno:
+    - int: O ano validado, se estiver correto.
+    - tuple: Em caso de erro, retorna uma tupla contendo uma mensagem JSON e o código de status HTTP 400.
+             Exemplos de erro incluem ano inválido, não numérico ou fora do intervalo permitido.
+    """
     ano_raw = request.args.get("ano")
     year = request.args.get("ano", type=int)
     if ano_raw is not None and year is None:
@@ -27,6 +38,24 @@ def validate_year(opt):
     return year
 
 def validate_suboption(opt):
+    """
+    Valida a subopção fornecida na query string com base na opção selecionada.
+
+    Parâmetros:
+    - opt (int): Código da opção principal (por exemplo, 3, 5 ou 6), que define se a subopção é necessária.
+
+    Retorno:
+    - tuple:
+        - sub (int or None): Número da subopção validada, ou None se não aplicável.
+        - sub_value (str or None): Valor associado à subopção, ou None se não aplicável.
+
+    Retorno em caso de erro:
+    - tuple: Em caso de erro, retorna uma tupla contendo uma mensagem JSON de erro e
+             o código de status HTTP 400. Os erros possíveis incluem:
+        - subopção não numérica
+        - erro ao acessar o servidor para obter subopções
+        - subopção fora do intervalo permitido
+    """
     sub = None
     sub_value = None
     if opt in (3, 5, 6):
