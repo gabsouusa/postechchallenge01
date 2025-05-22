@@ -73,7 +73,9 @@ def get_dados_opt3():
                   - quantidade_kg
     """
     opt = 3
-    year = validate_year(opt)
+    year, error = validate_year(opt)
+    if error:
+        return error 
     sub, sub_value = validate_suboption(opt)
 
     return fetch_or_scrape_data(year, opt, db, opcao_model_map, sub, sub_value)

@@ -6,36 +6,34 @@ def validate_year(opt):
     """
     Valida o parâmetro de ano fornecido na query da requisição.
 
-    Parâmetros:
-    - opt (int): Código da opção (ex: 2 a 6), utilizado para definir o ano padrão e buscar o intervalo válido.
-
-    Retorno:
-    - int: O ano validado, se estiver correto.
-    - tuple: Em caso de erro, retorna uma tupla contendo uma mensagem JSON e o código de status HTTP 400.
-             Exemplos de erro incluem ano inválido, não numérico ou fora do intervalo permitido.
+    Retorna:
+    - (int, None): ano validado com sucesso.
+    - (None, tuple): erro no formato (mensagem_json, status_http)
     """
-    ano_raw = request.args.get("ano")
-    year = request.args.get("ano", type=int)
-    if ano_raw is not None and year is None:
-        return json.dumps({
-            "erro": "O valor do parâmetro 'ano' deve ser um número inteiro."
-        }, ensure_ascii=False), 400
+    ano_str = request.args.get("ano")
 
-    if year is None:
+    if ano_str is not None:
+        try:
+            year = int(ano_str)
+        except ValueError:
+            return None, (json.dumps({
+                "erro": "O valor do parâmetro 'ano' deve ser um número inteiro."
+            }, ensure_ascii=False), 400)
+    else:
         year = 2023 if opt in {2, 3, 4} else 2024
 
     valid_year_start, valid_year_end = capturar_anos(opt, year)
     if valid_year_start is None or valid_year_end is None:
-        return json.dumps({
+        return None, (json.dumps({
             "erro": "Ocorreu um erro ao tentar acessar o servidor. Por favor, tente novamente mais tarde."
-        }, ensure_ascii=False), 400
+        }, ensure_ascii=False), 400)
 
     if year < valid_year_start or year > valid_year_end:
-        return json.dumps({
+        return None, (json.dumps({
             "erro": f"Ano inválido. Escolha um dos seguintes anos para essa opção: {valid_year_start} - {valid_year_end}."
-        }, ensure_ascii=False), 400
-    
-    return year
+        }, ensure_ascii=False), 400)
+
+    return year, None
 
 def validate_suboption(opt):
     """

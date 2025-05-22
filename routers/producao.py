@@ -61,5 +61,7 @@ def get_dados_opt2():
                   - quantidade_lt
     """
     opt = 2
-    year = validate_year(opt)
+    year, error = validate_year(opt)
+    if error:
+        return error 
     return fetch_or_scrape_data(year, opt, db, opcao_model_map)
