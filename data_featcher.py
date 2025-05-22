@@ -26,22 +26,26 @@ def fetch_or_scrape_data(year, opt, db, opcao_model_map, sub=None, sub_value=Non
     try:
         dados = execute_query(year, opt, sub, sub_value, opcao_model_map)
 
-        if dados is None:
+        if not dados:
             logging.info("Dado não encontrado no banco de dados. Iniciando scraping...")
             dados = capturar_dados(opt, year, sub)
 
+            if isinstance(dados, tuple) and isinstance(dados[0], dict) and "erro" in dados[0]:
+                return json.dumps(dados[0], ensure_ascii=False), dados[1]
+
             if not dados:
-                return json.dumps({"mensagem": "Nenhum dado encontrado para esta opção."}, ensure_ascii=False), 404
+                return json.dumps({
+                    "mensagem": "Nenhum dado encontrado para esta opção."
+                }, ensure_ascii=False), 404
 
             logging.info("Escrevendo dado no banco de dados...")
             register_data(db, dados, opt, opcao_model_map)
             logging.info("Banco de dados atualizado com sucesso.")
 
-        if not dados:
-            return json.dumps({"mensagem": "Nenhum dado encontrado para esta opção."}, ensure_ascii=False), 404
-
         return json.dumps(dados, ensure_ascii=False, indent=2), 200
 
     except Exception as e:
-        logging.error(f"Erro ao processar a requisição: {e}")
-        return json.dumps({"erro": "Erro interno do servidor."}, ensure_ascii=False), 500
+        logging.exception("Erro ao processar a requisição:")
+        return json.dumps({
+            "erro": "Erro interno do servidor."
+        }, ensure_ascii=False), 500
