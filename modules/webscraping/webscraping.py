@@ -132,12 +132,21 @@ def capturar_dados_opt_03(url, ano, sub):
     dados = []
     if sub == 1:
         tipo_nome = 'Vinífetas'
-    if sub == 2:
+    elif sub == 2:
         tipo_nome = 'Americanas E Híbridas'
-    if sub == 3:
+    elif sub == 3:
         tipo_nome = 'Uvas De Mesa'
-    if sub == 4:
+    elif sub == 4:
         tipo_nome = 'Sem Classificação'
+    else:
+        logging.error(f"Subopção inválida: {sub} para opção 3")
+        valid_subs = capturar_subopcoes(3, sub)
+        numeros_validos = [str(k) for k in valid_subs.keys() if isinstance(k, int)]
+        subopcoes_list = ', '.join(numeros_validos) if numeros_validos else "nenhuma subopção encontrada"
+        return {
+            "erro": f"Subopção inválida. Escolha uma das seguintes subopções para essa opção: {subopcoes_list}."
+        }, 400
+    
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -185,14 +194,23 @@ def capturar_dados_opt_05_06(url, opcao, ano, sub):
     dados = []
     if sub == 1:
         tipo_nome = 'Vinhos De Mesa'
-    if sub == 2:
+    elif sub == 2:
         tipo_nome = 'Espumantes'
-    if sub == 3:
+    elif sub == 3:
         tipo_nome = 'Uvas Frescas'
-    if (opcao == 5) & (sub == 4):
+    elif (opcao == 5 and sub == 4):
         tipo_nome = 'Uvas Passas'
-    if ((opcao == 5) & (sub == 5)) | ((opcao == 6) & (sub == 4)):
+    elif (opcao == 5 and sub == 5) or (opcao == 6 and sub == 4):
         tipo_nome = 'Suco De Uva'
+    else:
+        logging.error(f"Subopção inválida: {sub} para opção {opcao}")
+        valid_subs = capturar_subopcoes(opcao, sub)
+        numeros_validos = [str(k) for k in valid_subs.keys() if isinstance(k, int)]
+        subopcoes_list = ', '.join(numeros_validos) if numeros_validos else "nenhuma subopção encontrada"
+        return {
+            "erro": f"Subopção inválida. Escolha uma das seguintes subopções para essa opção: {subopcoes_list}."
+        }, 400
+    
     try:
         response = requests.get(url)
         response.raise_for_status()

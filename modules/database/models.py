@@ -47,3 +47,9 @@ class Exportacao(db.Model):
     pais = db.Column(db.String(120), nullable=False)
     quantidade_kg = db.Column(db.Integer, nullable=True)
     valor_usd = db.Column(db.Float, nullable=True)
+
+class Usuario(db.Model):
+    __tablename__ = 'usuarios'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
