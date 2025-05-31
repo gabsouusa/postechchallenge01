@@ -1,11 +1,11 @@
 from flask import Blueprint
 from flask_jwt_extended import jwt_required
-from validators import validate_year
+from services.validators import validate_year
 
 from modules.database.db_config import db
 from modules.database.models import Producao, Processamento, Comercializacao, Importacao, Exportacao, Usuario
 
-from data_featcher import fetch_or_scrape_data
+from services.data_featcher import fetch_or_scrape_data
 
 opcao_model_map = {
     2: Producao,
