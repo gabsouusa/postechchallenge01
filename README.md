@@ -11,6 +11,8 @@ API: https://postechchallenge01-badpbzdsbmdaazg2.eastus2-01.azurewebsites.net/
 
 Site Vitibrasil: http://vitibrasil.cnpuv.embrapa.br/index.php
 
+Link Video Explicativo: https://www.youtube.com/watch?v=Ppsfe5duSgQ
+
 ## ⚙️ Stack Usada
 
 Python - Flask, JWT, Swagger, SQLAlchemy
