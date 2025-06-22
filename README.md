@@ -70,7 +70,7 @@ Python - Flask, JWT, Swagger, SQLAlchemy
 ### 1. Clone o repositório
 
 ```
-git clone https://github.com/ileoh/flask_exemplo.git
+git clone https://github.com/gabsouusa/postechchallenge01
 ```
 
 ### 2. Instale a versão do Python 3.13.3
